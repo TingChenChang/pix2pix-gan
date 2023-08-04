@@ -22,10 +22,13 @@ TRAIN_DIR = 'data/edges2portrait/train_data'
 VAL_DIR = 'data/edges2portrait/val_data/'
 MODEL_DIR = 'training_weights/edges2portrait/'
 
+PRETRAINED_GENERATOR = ''
+PRETRAINED_DISCRIMINATOR = ''
+
 if not os.path.isdir(MODEL_DIR):
     os.makedirs(MODEL_DIR)
     
-n_gpus = 1
+n_gpus = torch.cuda.device_count()
 batch_size = 32 * n_gpus
 
 # Dataloader
@@ -100,7 +103,10 @@ norm_layer = get_norm_layer()
 
 # Generator
 generator = UnetGenerator(3, 3, 64, norm_layer=norm_layer, use_dropout=False)
-generator.apply(weights_init)
+if PRETRAINED_GENERATOR:
+    generator.load_state_dict(torch.load(PRETRAINED_GENERATOR))
+else:
+    generator.apply(weights_init)
 generator = torch.nn.DataParallel(generator)  # multi-GPUs
 generator = generator.to(device)
 print('# Generator Summary:')
@@ -108,7 +114,10 @@ print(summary(generator, (3, 256, 256)))
 
 # Discriminator
 discriminator = Discriminator(6, 64, n_layers=3, norm_layer=norm_layer)
-discriminator.apply(weights_init)
+if PRETRAINED_DISCRIMINATOR:
+    discriminator.load_state_dict(torch.load(PRETRAINED_DISCRIMINATOR))
+else:
+    discriminator.apply(weights_init)
 discriminator = torch.nn.DataParallel(discriminator)  # multi-GPUs
 discriminator = discriminator.to(device)
 print('# Discriminator Summary:')
@@ -150,49 +159,43 @@ for epoch in range(1, NUM_EPOCHS + 1):
         input_img = input_img.to(device)
         target_img = target_img.to(device)
         
-        # print("Inp:", input_img.shape)
-        # print("Tar:", target_img.shape)
-        
-        generated_image = generator(input_img)
-        # print("G_img:", generated_image.shape)
-        
+        # ground truth labels real and fake
         real_target = Variable(torch.ones(input_img.size(0), 1, 30, 30).to(device))
         fake_target = Variable(torch.zeros(input_img.size(0), 1, 30, 30).to(device))
         
-        # Train Discriminator with fake/real data
-        # for fake data
+        # generator forward pass
+        generated_image = generator(input_img)
+        
+        # train discriminator with fake/generated images
         disc_inp_fake = torch.cat((input_img, generated_image), 1)
         D_fake = discriminator(disc_inp_fake.detach())
-        # print("D_fake:", D_fake.shape)
         D_fake_loss = discriminator_loss(D_fake, fake_target)
-        # D_real_loss.backward()
     
-        # for real data
+        # train discriminator with real images
         disc_inp_real = torch.cat((input_img, target_img), 1)
         D_real = discriminator(disc_inp_real)
         D_real_loss = discriminator_loss(D_real, real_target)
-        # D_fake_loss.backward()
-      
+
+        # average discriminator loss
         D_total_loss = (D_real_loss + D_fake_loss) / 2
         D_loss_list.append(D_total_loss)
-      
+        # compute gradients and run optimizer step
         D_total_loss.backward()
         D_optimizer.step()
         
-        # Train generator with real labels
+        # train generator with real labels
         G_optimizer.zero_grad()
         fake_gen = torch.cat((input_img, generated_image), 1)
         G = discriminator(fake_gen)
         G_loss = generator_loss(generated_image, target_img, G, real_target)
         G_loss_list.append(G_loss)
-
+        # compute gradients and run optimizer step
         G_loss.backward()
         G_optimizer.step()
         
-        print(f"D_total_loss: {D_total_loss:.6f}, G_loss:{G_loss:.6f}")
+        # print(f"D_total_loss: {D_total_loss:.6f}, G_loss:{G_loss:.6f}")
         
     print(f'Epoch: [{epoch}/{NUM_EPOCHS}]: D_loss: {torch.mean(torch.FloatTensor(D_loss_list)):.4f}, G_loss: {torch.mean(torch.FloatTensor(G_loss_list)):.4f}')
-    print('#####')
     
     D_loss_plot.append(torch.mean(torch.FloatTensor(D_loss_list)))
     G_loss_plot.append(torch.mean(torch.FloatTensor(G_loss_list)))
