@@ -23,7 +23,7 @@ VAL_DIR = 'data/edges2portrait/val_data/'
 MODEL_DIR = 'training_weights/edges2portrait/'
 
 if not os.path.isdir(MODEL_DIR):
-    os.mkdir(MODEL_DIR)
+    os.makedirs(MODEL_DIR)
     
 n_gpus = 1
 batch_size = 32 * n_gpus
