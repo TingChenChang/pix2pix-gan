@@ -196,11 +196,12 @@ for epoch in range(1, NUM_EPOCHS + 1):
     
     D_loss_plot.append(torch.mean(torch.FloatTensor(D_loss_list)))
     G_loss_plot.append(torch.mean(torch.FloatTensor(G_loss_list)))
-     
-    torch.save(generator.state_dict(), os.path.join(MODEL_DIR, f'generator_epoch_{epoch}.pth'))
-    torch.save(discriminator.state_dict(), os.path.join(MODEL_DIR, f'discriminator_epoch_{epoch}.pth'))
     
-    for (inputs, targets), _ in val_dl:
-        inputs = inputs.to(device)
-        generated_output = generator(inputs)
-        save_image(generated_output.data[:10], os.path.join(MODEL_DIR, f'sample_{epoch}.png'), nrow=5, normalize=True)
+    if epoch % 5 == 0:
+        torch.save(generator.state_dict(), os.path.join(MODEL_DIR, f'generator_epoch_{epoch}.pth'))
+        torch.save(discriminator.state_dict(), os.path.join(MODEL_DIR, f'discriminator_epoch_{epoch}.pth'))
+        
+        for (inputs, targets), _ in val_dl:
+            inputs = inputs.to(device)
+            generated_output = generator(inputs)
+            save_image(generated_output.data[:10], os.path.join(MODEL_DIR, f'sample_{epoch}.png'), nrow=5, normalize=True)
