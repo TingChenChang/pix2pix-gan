@@ -198,7 +198,7 @@ for epoch in range(1, NUM_EPOCHS + 1):
     G_loss_plot.append(torch.mean(torch.FloatTensor(G_loss_list)))
      
     torch.save(generator.state_dict(), os.path.join(MODEL_DIR, f'generator_epoch_{epoch}.pth'))
-    torch.save(discriminator.state_dict(), os.path.join(MODEL_DIR, 'discriminator_epoch_{epoch}.pth'))
+    torch.save(discriminator.state_dict(), os.path.join(MODEL_DIR, f'discriminator_epoch_{epoch}.pth'))
     
     for (inputs, targets), _ in val_dl:
         inputs = inputs.to(device)
