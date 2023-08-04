@@ -136,7 +136,7 @@ G_optimizer = optim.Adam(generator.parameters(), lr=LEARNING_RATE, betas=(0.5, 0
 D_optimizer = optim.Adam(discriminator.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.999))
 
 # Training Loop
-NUM_EPOCHS = 6
+NUM_EPOCHS = 50
 
 D_loss_plot, G_loss_plot = [], []
 
