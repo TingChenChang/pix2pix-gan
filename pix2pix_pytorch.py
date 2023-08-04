@@ -203,4 +203,4 @@ for epoch in range(1, NUM_EPOCHS + 1):
     for (inputs, targets), _ in val_dl:
         inputs = inputs.to(device)
         generated_output = generator(inputs)
-        save_image(generated_output.data[:10], os.path.join(MODEL_DIR, f'images/sample_{epoch}.png'), nrow=5, normalize=True)
+        save_image(generated_output.data[:10], os.path.join(MODEL_DIR, f'sample_{epoch}.png'), nrow=5, normalize=True)
