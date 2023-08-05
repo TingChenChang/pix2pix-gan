@@ -22,13 +22,13 @@ TRAIN_DIR = 'data/edges2portrait/train_data'
 VAL_DIR = 'data/edges2portrait/val_data/'
 MODEL_DIR = 'training_weights/edges2portrait/'
 
-PRETRAINED_GENERATOR = ''
+PRETRAINED_GENERATOR = 'training_weights/edges2portrait/generator.pth'
 PRETRAINED_DISCRIMINATOR = ''
 
 if not os.path.isdir(MODEL_DIR):
     os.makedirs(MODEL_DIR)
     
-n_gpus = torch.cuda.device_count()
+n_gpus = max(torch.cuda.device_count(), 1)
 batch_size = 32 * n_gpus
 
 # Dataloader
@@ -152,7 +152,8 @@ D_loss_plot, G_loss_plot = [], []
 for epoch in range(1, NUM_EPOCHS + 1):
     
     D_loss_list, G_loss_list = [], []
-   
+    
+    counter = 0
     for (input_img, target_img), _ in train_dl:
        
         D_optimizer.zero_grad()
@@ -177,11 +178,12 @@ for epoch in range(1, NUM_EPOCHS + 1):
         D_real_loss = discriminator_loss(D_real, real_target)
 
         # average discriminator loss
-        D_total_loss = (D_real_loss + D_fake_loss) / 2
+        D_total_loss = D_real_loss + D_fake_loss
         D_loss_list.append(D_total_loss)
         # compute gradients and run optimizer step
-        D_total_loss.backward()
-        D_optimizer.step()
+        if counter % 10 == 0:
+            D_total_loss.backward()
+            D_optimizer.step()
         
         # train generator with real labels
         G_optimizer.zero_grad()
@@ -193,6 +195,7 @@ for epoch in range(1, NUM_EPOCHS + 1):
         G_loss.backward()
         G_optimizer.step()
         
+        counter += 1
         # print(f"D_total_loss: {D_total_loss:.6f}, G_loss:{G_loss:.6f}")
         
     print(f'Epoch: [{epoch}/{NUM_EPOCHS}]: D_loss: {torch.mean(torch.FloatTensor(D_loss_list)):.4f}, G_loss: {torch.mean(torch.FloatTensor(G_loss_list)):.4f}')
