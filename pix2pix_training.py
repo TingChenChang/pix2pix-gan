@@ -18,9 +18,9 @@ from patchgan_discriminator import Discriminator
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0,4,5,6,7'
 
-TRAIN_DIR = 'data/edges2portrait/train_data_sample'
-VAL_DIR = 'data/edges2portrait/val_data_sample/'
-MODEL_DIR = 'training_weights/edges2portrait_sample/'
+TRAIN_DIR = 'data/edges2portrait/train_data'
+VAL_DIR = 'data/edges2portrait/val_data/'
+MODEL_DIR = 'training_weights/edges2portrait/'
 
 PRETRAINED_GENERATOR = ''
 PRETRAINED_DISCRIMINATOR = ''
@@ -146,7 +146,7 @@ G_optimizer = optim.Adam(generator.parameters(), lr=LEARNING_RATE, betas=(0.5, 0
 D_optimizer = optim.Adam(discriminator.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.999))
 
 # Training Loop
-NUM_EPOCHS = 50
+NUM_EPOCHS = 200
 
 D_loss_plot, G_loss_plot = [], []
 
@@ -154,7 +154,6 @@ for epoch in range(1, NUM_EPOCHS + 1):
     
     D_loss_list, G_loss_list = [], []
     
-    counter = 0
     for (input_img, target_img), _ in train_dl:
        
         D_optimizer.zero_grad()
@@ -182,9 +181,8 @@ for epoch in range(1, NUM_EPOCHS + 1):
         D_total_loss = D_real_loss + D_fake_loss
         D_loss_list.append(D_total_loss)
         # compute gradients and run optimizer step
-        if counter % 10 == 0:
-            D_total_loss.backward()
-            D_optimizer.step()
+        D_total_loss.backward()
+        D_optimizer.step()
         
         # train generator with real labels
         G_optimizer.zero_grad()
@@ -196,7 +194,6 @@ for epoch in range(1, NUM_EPOCHS + 1):
         G_loss.backward()
         G_optimizer.step()
         
-        counter += 1
         # print(f"D_total_loss: {D_total_loss:.6f}, G_loss:{G_loss:.6f}")
         
     print(f'Epoch: [{epoch}/{NUM_EPOCHS}]: D_loss: {torch.mean(torch.FloatTensor(D_loss_list)):.4f}, G_loss: {torch.mean(torch.FloatTensor(G_loss_list)):.4f}')
