@@ -22,14 +22,19 @@ TRAIN_DIR = 'data/edges2portrait/train_data'
 VAL_DIR = 'data/edges2portrait/val_data/'
 MODEL_DIR = 'training_weights/edges2portrait/'
 
-PRETRAINED_GENERATOR = 'training_weights/edges2portrait/generator.pth'
+PRETRAINED_GENERATOR = ''
 PRETRAINED_DISCRIMINATOR = ''
 
 if not os.path.isdir(MODEL_DIR):
     os.makedirs(MODEL_DIR)
-    
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # mps
 n_gpus = max(torch.cuda.device_count(), 1)
+print(f'Device: {device}, GPUs: {n_gpus}')
 batch_size = 32 * n_gpus
+
+if device == 'cuda':
+    torch.cuda.empty_cache()
 
 # Dataloader
 train_ds = ImageFolder(TRAIN_DIR, transform=transforms.Compose([Data_Normalize(is_train=True)]))
@@ -94,10 +99,6 @@ def get_norm_layer():
     if norm_type == 'batch':
         norm_layer = functools.partial(nn.BatchNorm2d, affine=True, track_running_stats=True)
     return norm_layer
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # mps
-torch.cuda.device_count()
-print(f'Device: {device}')
 
 norm_layer = get_norm_layer()
 
