@@ -56,8 +56,8 @@ class Data_Normalize(object):
     
     def __call__(self, image):
         inp, tar = read_image(image)
-        if self.is_train:
-            inp, tar = random_jittering_mirroring(inp, tar)
+        # if self.is_train:
+        #     inp, tar = random_jittering_mirroring(inp, tar)
         inp, tar = normalize(inp, tar)
         image_a = torch.from_numpy(inp.copy().transpose((2, 0, 1)))
         image_b = torch.from_numpy(tar.copy().transpose((2, 0, 1)))

@@ -1,4 +1,6 @@
+# %%
 import os
+import numpy as np
 import torch
 import torch.nn as nn
 import functools
@@ -18,7 +20,7 @@ from patchgan_discriminator import Discriminator
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0,4,5,6,7'
 
-TRAIN_DIR = 'data/edges2portrait/train_data'
+TRAIN_DIR = 'data/edges2portrait/train_data/'
 VAL_DIR = 'data/edges2portrait/val_data/'
 MODEL_DIR = 'training_weights/edges2portrait/'
 
@@ -43,33 +45,7 @@ train_dl = DataLoader(train_ds, batch_size)
 val_ds = ImageFolder(VAL_DIR, transform=transforms.Compose([Data_Normalize(is_train=False)]))
 val_dl = DataLoader(val_ds, batch_size)
 
-# def imshow(inputs, target, figsize=(10, 5)):
-#     inputs = np.uint8(inputs)
-#     target = np.uint8(target)
-#     tar = np.rollaxis(target[0], 0, 3)
-#     inp = np.rollaxis(inputs[0], 0, 3)
-#     title = ['Input Image', 'Ground Truth']
-#     display_list = [inp, tar]
-#     plt.figure(figsize=figsize)
-  
-#     for i in range(2):
-#         plt.subplot(1, 3, i + 1)
-#         plt.title(title[i])
-#         plt.axis('off')
-#         plt.imshow(display_list[i])
-#     plt.axis('off')
-#     # plt.imshow(image)
-
-# def show_batch(dl):
-#     j = 0
-#     for (images_a, images_b), _ in dl:
-#         j += 1
-#         imshow(images_a, images_b)
-#         if j == 3:
-#             break
-
-# show_batch(train_dl)
-
+# %%
 # custom weights initialization called on generator and discriminator
 def weights_init(net, init_type='normal', scaling=0.02):
     """Initialize network weights.
@@ -108,7 +84,7 @@ if PRETRAINED_GENERATOR:
     generator.load_state_dict(torch.load(PRETRAINED_GENERATOR))
 else:
     generator.apply(weights_init)
-generator = torch.nn.DataParallel(generator)  # multi-GPUs
+# generator = torch.nn.DataParallel(generator)  # multi-GPUs
 generator = generator.to(device)
 print('# Generator Summary:')
 print(summary(generator, (3, 256, 256)))
@@ -119,7 +95,7 @@ if PRETRAINED_DISCRIMINATOR:
     discriminator.load_state_dict(torch.load(PRETRAINED_DISCRIMINATOR))
 else:
     discriminator.apply(weights_init)
-discriminator = torch.nn.DataParallel(discriminator)  # multi-GPUs
+# discriminator = torch.nn.DataParallel(discriminator)  # multi-GPUs
 discriminator = discriminator.to(device)
 print('# Discriminator Summary:')
 print(summary(discriminator, (6, 256, 256)))
@@ -140,13 +116,13 @@ def discriminator_loss(output, label):
     return disc_loss
 
 # Optimizer
-LEARNING_RATE = 1e-4
+LEARNING_RATE = 1e-6
 
 G_optimizer = optim.Adam(generator.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.999))
 D_optimizer = optim.Adam(discriminator.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.999))
 
 # Training Loop
-NUM_EPOCHS = 200
+NUM_EPOCHS = 100
 
 D_loss_plot, G_loss_plot = [], []
 
@@ -156,7 +132,6 @@ for epoch in range(1, NUM_EPOCHS + 1):
     
     for (input_img, target_img), _ in train_dl:
        
-        D_optimizer.zero_grad()
         input_img = input_img.to(device)
         target_img = target_img.to(device)
         
@@ -181,16 +156,17 @@ for epoch in range(1, NUM_EPOCHS + 1):
         D_total_loss = D_real_loss + D_fake_loss
         D_loss_list.append(D_total_loss)
         # compute gradients and run optimizer step
+        D_optimizer.zero_grad()
         D_total_loss.backward()
         D_optimizer.step()
         
         # train generator with real labels
-        G_optimizer.zero_grad()
         fake_gen = torch.cat((input_img, generated_image), 1)
         G = discriminator(fake_gen)
         G_loss = generator_loss(generated_image, target_img, G, real_target)
         G_loss_list.append(G_loss)
         # compute gradients and run optimizer step
+        G_optimizer.zero_grad()
         G_loss.backward()
         G_optimizer.step()
         
@@ -209,3 +185,5 @@ for epoch in range(1, NUM_EPOCHS + 1):
             inputs = inputs.to(device)
             generated_output = generator(inputs)
             save_image(generated_output.data[:10], os.path.join(MODEL_DIR, f'sample_{epoch}.png'), nrow=5, normalize=True)
+
+# %%
