@@ -18,9 +18,9 @@ from patchgan_discriminator import Discriminator
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0,4,5,6,7'
 
-TRAIN_DIR = 'data/edges2portrait/train_data'
-VAL_DIR = 'data/edges2portrait/val_data/'
-MODEL_DIR = 'training_weights/edges2portrait/'
+TRAIN_DIR = 'data/edges2portrait/train_data_sample'
+VAL_DIR = 'data/edges2portrait/val_data_sample/'
+MODEL_DIR = 'training_weights/edges2portrait_sample/'
 
 PRETRAINED_GENERATOR = ''
 PRETRAINED_DISCRIMINATOR = ''
@@ -140,7 +140,7 @@ def discriminator_loss(output, label):
     return disc_loss
 
 # Optimizer
-LEARNING_RATE = 2e-4
+LEARNING_RATE = 1e-4
 
 G_optimizer = optim.Adam(generator.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.999))
 D_optimizer = optim.Adam(discriminator.parameters(), lr=LEARNING_RATE, betas=(0.5, 0.999))
