@@ -161,3 +161,4 @@ cython_debug/
 
 training_weights/
 test.ipynb
+.DS_Store
