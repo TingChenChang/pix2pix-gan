@@ -1,6 +1,7 @@
 # %%
 import os
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 import functools
@@ -225,3 +226,15 @@ for epoch in range(1, NUM_EPOCHS + 1):
                 val_G_loss_list.append(G_loss)
                 
             print(f'Validation Epoch: [{epoch}/{NUM_EPOCHS}]: val_D_loss: {torch.mean(torch.FloatTensor(val_D_loss_list)):.4f}, val_G_loss: {torch.mean(torch.FloatTensor(val_G_loss_list)):.4f}')
+
+# Plot Loss
+loss_records = pd.DataFame({
+    'D_loss_plot': D_loss_plot,
+    'G_loss_plot': G_loss_plot
+})
+loss_records.to_csv(os.path.join(MODEL_DIR, 'loss_history.csv'), index=False)
+
+loss_records.plot.line()
+plt.xlabel('Iteration')
+plt.ylabel('Loss')
+plt.savefig(os.path.join(MODEL_DIR, 'loss_history_plot.png'))
